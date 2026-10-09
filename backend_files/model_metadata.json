@@ -1,0 +1,70 @@
+{
+  "feature_columns": [
+    "Product_Weight",
+    "Product_Sugar_Content",
+    "Product_Allocated_Area",
+    "Product_MRP",
+    "Store_Size",
+    "Store_Location_City_Type",
+    "Store_Type",
+    "Product_Id_char",
+    "Store_Age_Years",
+    "Product_Type_Category"
+  ],
+  "numeric_ranges": {
+    "Product_Weight": {
+      "min": 4.0,
+      "max": 22.0
+    },
+    "Product_Allocated_Area": {
+      "min": 0.004,
+      "max": 0.298
+    },
+    "Product_MRP": {
+      "min": 31.0,
+      "max": 266.0
+    },
+    "Store_Age_Years": {
+      "min": 17.0,
+      "max": 39.0
+    }
+  },
+  "categorical_values": {
+    "Product_Sugar_Content": [
+      "Low Sugar",
+      "No Sugar",
+      "Regular"
+    ],
+    "Store_Size": [
+      "High",
+      "Medium",
+      "Small"
+    ],
+    "Store_Location_City_Type": [
+      "Tier 1",
+      "Tier 2",
+      "Tier 3"
+    ],
+    "Store_Type": [
+      "Departmental Store",
+      "Food Mart",
+      "Supermarket Type1",
+      "Supermarket Type2"
+    ],
+    "Product_Id_char": [
+      "DR",
+      "FD",
+      "NC"
+    ],
+    "Product_Type_Category": [
+      "Non-Perishable",
+      "Perishable"
+    ]
+  },
+  "target_range": {
+    "min": 33.0,
+    "max": 8000.0
+  },
+  "reference_year": 2026,
+  "selected_model": "Tuned Random Forest"
+}

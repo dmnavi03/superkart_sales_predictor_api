@@ -4,12 +4,12 @@ import pandas as pd
 import requests
 import streamlit as st
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://backend_files:7860").rstrip("/")
-REQUEST_TIMEOUT = 60
+BACKEND_URL = os.getenv("BACKEND_URL", "http://backend:7860").strip().rstrip("/")
+REQUEST_TIMEOUT = 30
 
 st.set_page_config(page_title="SuperKart Sales Prediction", layout="centered")
 st.title("SuperKart Product Store Sales Prediction")
-st.caption("Predictions use the same 10-feature schema as the trained model.")
+st.caption("Inputs are validated against the categories and numeric ranges used during training.")
 
 PERISHABLE_ITEMS = {
     "Fruits and Vegetables", "Dairy", "Meat", "Seafood", "Breads", "Frozen Foods"
@@ -36,7 +36,8 @@ with st.form("online_prediction_form"):
         Store_Size = st.selectbox("Store Size", ["Small", "Medium", "High"], index=1)
         Store_Location_City_Type = st.selectbox("Store Location City Type", ["Tier 1", "Tier 2", "Tier 3"], index=1)
         Store_Type = st.selectbox("Store Type", TRAINED_STORE_TYPES, index=2)
-        Store_Age_Years = st.number_input("Store Age (years; relative to 2026)", min_value=17, max_value=39, value=17, step=1)
+        # 🔴 CHANGE: age range matches the training data reference year (2026).
+        Store_Age_Years = st.number_input("Store Age in 2026 (years)", min_value=17, max_value=39, value=17, step=1)
         Product_Type = st.selectbox("Product Type", PRODUCT_TYPES)
 
     Product_Type_Category = "Perishable" if Product_Type in PERISHABLE_ITEMS else "Non-Perishable"
@@ -58,12 +59,12 @@ if predict_clicked:
     }
     st.dataframe(pd.DataFrame([input_payload]), use_container_width=True)
     try:
-        response = requests.post(
-            f"{BACKEND_URL}/v1/superkart", json=input_payload, timeout=REQUEST_TIMEOUT
-        )
+        response = requests.post(f"{BACKEND_URL}/v1/superkart", json=input_payload, timeout=REQUEST_TIMEOUT)
         if response.ok:
             result = response.json()
             st.success(f"Predicted Product Store Sales: {result['Predicted Product Store Sales']:.2f}")
+            if result.get("prediction_clipped"):
+                st.warning("The model produced a negative raw estimate; it was clipped to zero. Check logs and model/data versions.")
         else:
             st.error(f"Backend returned HTTP {response.status_code}: {response.text[:2000]}")
     except requests.RequestException as exc:
@@ -79,13 +80,13 @@ if uploaded_file is not None:
     if st.button("Predict batch", type="primary"):
         try:
             files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "text/csv")}
-            response = requests.post(
-                f"{BACKEND_URL}/v1/superkartbatch", files=files, timeout=120
-            )
+            response = requests.post(f"{BACKEND_URL}/v1/superkartbatch", files=files, timeout=120)
             if response.ok:
                 result = response.json()
-                st.success(f"Batch prediction completed for {result.get('count', len(result.get('predictions', [])))} rows.")
                 result_df = pd.DataFrame({"Predicted Product Store Sales": result["predictions"]})
+                st.success(f"Batch prediction completed for {result.get('count', len(result_df))} rows.")
+                if result.get("clipped_negative_predictions", 0):
+                    st.warning(f"{result['clipped_negative_predictions']} negative raw estimate(s) were clipped to zero; investigate model/data drift.")
                 st.dataframe(result_df, use_container_width=True)
                 st.download_button(
                     "Download predictions CSV",
@@ -94,7 +95,7 @@ if uploaded_file is not None:
                     mime="text/csv",
                 )
             else:
-                st.error(f"Backend returned HTTP {response.status_code}: {response.text[:2000]}")
+                st.error(f"Backend returned HTTP {response.status_code}: {response.text[:3000]}")
         except requests.RequestException as exc:
             st.error(f"Could not reach the backend at {BACKEND_URL}. Details: {exc}")
         except (ValueError, KeyError, TypeError) as exc:
