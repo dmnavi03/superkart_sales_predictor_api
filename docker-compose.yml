@@ -5,12 +5,6 @@ services:
     ports:
       - "7860:7860"
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7860/health', timeout=3)"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
   frontend:
     build:
       context: ./frontend_files
@@ -19,6 +13,5 @@ services:
     environment:
       BACKEND_URL: "http://backend:7860"
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     restart: unless-stopped

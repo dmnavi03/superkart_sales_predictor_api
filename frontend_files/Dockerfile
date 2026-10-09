@@ -8,9 +8,9 @@ WORKDIR /app
 COPY . .
 
 # Install Python dependencies listed in requirements.txt
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install -r requirements.txt
 
 # Define the command to run the Streamlit app on port 8501 and make it accessible externally
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.enableXsrfProtection=false"]
 
 # NOTE: Disable XSRF protection for easier external access in order to make batch predictions
